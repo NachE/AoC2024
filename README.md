@@ -10,6 +10,7 @@ These solutions aim to balance simplicity of code with achieving the desired res
 
 Each directory corresponds to a day's challenge and includes:
 
+- **Problem Description**: A brief summary of the challenge in description.txt
 - **Solution**: My code solution for the problem in the main.go
 - **Input**: The input provided: input.txt
 
