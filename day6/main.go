@@ -22,6 +22,55 @@ type board struct {
 	visited map[string]bool
 }
 
+func anotateCurrentGuardState(bb *board) bool {
+	k := fmt.Sprintf("%v-%v(%v/%v)", bb.guard[0], bb.guard[1], bb.dir[0], bb.dir[1])
+	if _, exists := bb.visited[k]; exists {
+		return true
+	}
+	bb.visited[k] = true
+	return false
+}
+
+func patrol(bb *board) (int, bool) { // bool: true -> loop found
+	res := 1
+	for {
+		// already visited position & direction, loop lookup for part2
+		k := fmt.Sprintf("%v-%v(%v/%v)", bb.guard[0], bb.guard[1], bb.dir[0], bb.dir[1])
+		if _, exists := bb.visited[k]; exists {
+			return res, true // loop found, return
+		}
+		bb.visited[k] = true
+
+		// step pos
+		nr := bb.guard[0] + bb.dir[0] // next row
+		nc := bb.guard[1] + bb.dir[1] // next col
+
+		if (nr < 0 || nr >= bb.rows) || (nc < 0 || nc >= bb.cols) {
+			// out of grid
+			break
+		}
+
+		// lookup for obstacle, rotate if found
+		if bb.grid[nr][nc] == '#' {
+			// rotate
+			bb.dir = [2]int{bb.dir[1], -bb.dir[0]} // [-1, 0] (DUP) -> [0, 1] (DRIGHT)
+			continue
+		}
+
+		// no obstacle found, allowed walk, seek
+		bb.guard[0] = nr
+		bb.guard[1] = nc
+
+		// part1, store pos if new
+		k = fmt.Sprintf("%v-%v", nr, nc)
+		if _, exists := bb.visited[k]; !exists {
+			bb.visited[k] = true
+			res++
+		}
+	}
+	return res, false
+}
+
 func main() {
 	file, err := os.Open("input.txt")
 	if err != nil {
@@ -36,9 +85,6 @@ func main() {
 	gf := false // guard found
 	for scanner.Scan() {
 		bb.rows++
-		// .Bytes() returns a referente to internal buff
-		// so we need to copy it in order to prevent
-		// multi-referenced board wid dupe data
 		lin := append([]byte{}, scanner.Bytes()...)
 		if !gf {
 			if r := bytes.Index(lin, []byte("^")); r > -1 {
@@ -61,41 +107,42 @@ func main() {
 		}
 		bb.grid = append(bb.grid, lin)
 	}
+	bb.rows++
 	bb.cols = len(bb.grid[0])
 	bb.visited[string(bb.guard[0])+string(bb.guard[1])] = true
+	startGuard := [2]int{bb.guard[0], bb.guard[1]}
+	startDir := [2]int{bb.dir[0], bb.dir[1]}
 
-	res1 := 1
-	for {
-		nr := bb.guard[0] + bb.dir[0] // next row
-		nc := bb.guard[1] + bb.dir[1] // next col
+	// patrol for part1
+	res1, _ := patrol(bb)
 
-		if nr < 0 || nr >= bb.rows {
-			// out of board
-			break
-		}
-		if nc < 0 || nc >= bb.cols {
-			// out of board
-			break
-		}
-		if bb.grid[nr][nc] == '#' {
-			// rotate
-			bb.dir = [2]int{bb.dir[1], -bb.dir[0]} // [-1, 0] (DUP) -> [0, 1] (DRIGHT)
-			continue
-		}
-		bb.guard[0] = nr
-		bb.guard[1] = nc
-
-		if _, exists := bb.visited[string(nr)+string(nc)]; !exists {
-			bb.visited[string(nr)+string(nc)] = true
-			res1++
-			// dbg:
-			// bb.grid[nr][nc] = '*'
+	// test obstacles in every pos
+	res2 := 0
+	for irow := 0; irow < bb.rows; irow++ {
+		// iter board cols of current row
+		for icol := 0; icol < bb.cols; icol++ {
+			// skip non-free position
+			if bb.grid[irow][icol] == '#' {
+				continue
+			}
+			// skip guard position
+			if irow == startGuard[0] && icol == startGuard[1] {
+				continue
+			}
+			// reset objects
+			bb.guard = [2]int{startGuard[0], startGuard[1]}
+			bb.dir = [2]int{startDir[0], startDir[1]}
+			bb.visited = make(map[string]bool)
+			bb.grid[irow][icol] = '#' // put tmp obstacle
+			// patrol for loop
+			if _, loop := patrol(bb); loop {
+				// loop found
+				res2++
+			}
+			bb.grid[irow][icol] = '.' // rm tmp obstacle
 		}
 	}
-	// dbg:
-	// for _, row := range bb.grid {
-	// 	fmt.Println(string(row))
-	// }
 
 	fmt.Println("res1:", res1)
+	fmt.Println("res2:", res2)
 }
