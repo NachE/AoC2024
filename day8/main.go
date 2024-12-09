@@ -8,11 +8,12 @@ import (
 )
 
 type board struct {
-	grid      [][]byte
-	rows      int
-	cols      int
-	dirs      map[[2]int]bool
-	antinodes map[[2]int]bool
+	grid       [][]byte
+	rows       int
+	cols       int
+	dirs       map[[2]int]bool
+	antinodes  map[[2]int]bool
+	extranodes map[[2]int]bool
 }
 
 // get char at pos [2]int{row, col}
@@ -20,18 +21,28 @@ func (b *board) gc(pos [2]int) byte {
 	return b.grid[pos[0]][pos[1]]
 }
 
-// set antinode, return false if already exists
-// or if the pos is out of map and antinode
-// cannot be setted
-func (b *board) setAntinode(pos [2]int) bool {
+// set antinode, ignores out of greed
+func (b *board) setAntinode(pos [2]int) {
 	if isoutofgrid(b, pos) {
-		return false
-	}
-	if _, exists := b.antinodes[pos]; exists {
-		return false // already setted antinode
+		return
 	}
 	b.antinodes[pos] = true
-	return true // new antinode
+}
+
+// set extra nodes, ignores out of greed
+func (b *board) setExtraAntinodes(startPos [2]int, dir [2]int, step int) {
+	b.extranodes[startPos] = true
+	irow := startPos[0]
+	icol := startPos[1]
+	for {
+		irow = irow + (dir[0] * step)
+		icol = icol + (dir[1] * step)
+		newantinode := [2]int{irow, icol}
+		if isoutofgrid(b, newantinode) {
+			break
+		}
+		b.extranodes[newantinode] = true
+	}
 }
 
 // absolute greatest common factor
@@ -63,7 +74,7 @@ func builddirs(r int) map[[2]int]bool {
 			}
 
 			// prevent -1, -1 and -2, -2 and -4, -4
-			// because is the same move but with
+			// because it is the same move with
 			// different rad size
 			agcf := agcf(drow, dcol)
 			ndrow := drow / agcf
@@ -87,40 +98,45 @@ func isoutofgrid(bb *board, cords [2]int) bool {
 }
 
 // search for antinodes in bb starting at irow, icol in dir direction
-// store antinodes cords in bb.antinodes for no dupes-track
-// return num of antinodes found
-func search(bb *board, irow, icol int, dir [2]int) int {
+// store antinodes cords in bb.antinodes
+func search(bb *board, irow, icol int, dir [2]int) {
 	step := 0
 	f := bb.gc([2]int{irow, icol})
-	r := 0
 	for {
 		step++
 		nr := irow + (dir[0] * step)
 		nc := icol + (dir[1] * step)
 		if isoutofgrid(bb, [2]int{nr, nc}) {
 			// out of grid
-			return 0
+			return
 		}
 		if bb.gc([2]int{nr, nc}) == f {
 			// tip for optimization: store antena pair in a map
 			// to prevent re-check one pair twice
 			// pair found
-			// now should be a antinodeA at distance step with in dir
-			// and antinodeB starting from irow, icol with dir rotated 180
+			// now should be an antinodeA at distance 'step' in direction 'dir'
+			// and antinodeB starting from irow, icol in 'dir' rotated 180
+
+			// look for antinode A for part 1
 			antinodeA := [2]int{nr + (dir[0] * step), nc + (dir[1] * step)}
-			if bb.setAntinode(antinodeA) {
-				r++
-			}
-			// rotate dir 180
+			bb.setAntinode(antinodeA)
+
+			// calc antinodes for part 2 starting at 'nr', 'nc' in direction 'dir'
+			bb.setExtraAntinodes([2]int{nr, nc}, dir, step)
+
+			// rotate 'dir' 180 for part 2
 			rdir := [2]int{-dir[0], -dir[1]}
+
+			// lok for antinode B for part 1
 			antinodeB := [2]int{irow + (rdir[0] * step), icol + (rdir[1] * step)}
-			if bb.setAntinode(antinodeB) {
-				r++
-			}
-			break // the pair antena has been found, break loop
+			bb.setAntinode(antinodeB)
+
+			// calc andinodes for part 2 starting at 'irow', 'icol' in direction 'rdir'
+			bb.setExtraAntinodes([2]int{irow, icol}, rdir, step)
+			// the pair antena has been found, break loop
+			break
 		}
 	}
-	return r
 }
 
 func main() {
@@ -143,18 +159,19 @@ func main() {
 	bb.cols = len(bb.grid[0])
 	bb.dirs = builddirs(bb.rows * 2)
 	bb.antinodes = make(map[[2]int]bool)
+	bb.extranodes = make(map[[2]int]bool)
 
-	res1 := 0
 	for irow := 0; irow < bb.rows; irow++ {
 		// iter board cols of current row
 		for icol := 0; icol < bb.cols; icol++ {
 			if bb.grid[irow][icol] != '.' && bb.grid[irow][icol] != '*' {
 				// antena
 				for dir := range bb.dirs {
-					res1 += search(bb, irow, icol, dir)
+					search(bb, irow, icol, dir)
 				}
 			}
 		}
 	}
-	fmt.Println("res1: ", res1)
+	fmt.Println("res1: ", len(bb.antinodes))
+	fmt.Println("res2: ", len(bb.extranodes))
 }
