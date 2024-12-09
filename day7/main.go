@@ -94,9 +94,11 @@ func main() {
 			}
 			nums = append(nums, num)
 		}
+		// part1
 		if validate(nums, target, []string{"*", "+"}) {
 			res1 += target
 		}
+		// part2
 		if validate(nums, target, []string{"*", "+", "||"}) {
 			res2 += target
 		}
