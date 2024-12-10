@@ -5,21 +5,15 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
+
+	"github.com/NachE/AoC2024/day9/common"
+	"github.com/NachE/AoC2024/day9/part2"
 )
 
 type bread struct {
 	file *os.File
 	pos  int64
 	bid  []int64 // blockid stack
-}
-
-func byteint(b byte) int {
-	r, err := strconv.Atoi(fmt.Sprintf("%v", string(b)))
-	if err != nil {
-		panic(err)
-	}
-	return r
 }
 
 func (b *bread) pop() int64 {
@@ -32,7 +26,7 @@ func (b *bread) pop() int64 {
 		if err != nil {
 			panic(err)
 		}
-		bsize := byteint(bff[0])
+		bsize := common.Byteint(bff[0])
 
 		// build block file id
 		fileid := b.pos / 2
@@ -98,14 +92,14 @@ func main() {
 		}
 
 		// fwpos is also block id
-		bsize := byteint(bff[0])
+		bsize := common.Byteint(bff[0])
 		for i := 0; i < bsize; i++ {
 			rearangedpos++
 			res1 += (fwpos / 2) * int64(rearangedpos)
 		}
 
 		// move blocks to current free space
-		freespace := byteint(bff[1])
+		freespace := common.Byteint(bff[1])
 		for i := 0; i < freespace; i++ {
 			rearangedpos++
 			bwid := bfile.pop()
@@ -121,5 +115,16 @@ func main() {
 		res1 += bwid * int64(rearangedpos)
 	}
 
+	// part 2
+
+	// The strategy used for part 1 is too tricky to be used for
+	// part 2. So a new strategy should be implemented for part 2
+	// This is a reminder for future implementation: a too specific
+	// solution can just work for specific problem and hard to
+	// refactor.
+
+	res2 := part2.Main(file)
+
 	fmt.Println("res1: ", res1)
+	fmt.Println("res2: ", res2)
 }
