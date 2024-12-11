@@ -48,7 +48,7 @@ func (b *board) get(pos [2]int) int {
 	return steps[bn]
 }
 
-func (b *board) findpaths(startpos [2]int) int {
+func (b *board) findpaths(startpos [2]int, unique bool) int {
 	score := 0
 
 	stck := []state{{
@@ -71,6 +71,8 @@ func (b *board) findpaths(startpos [2]int) int {
 				if stte.step+1 == 9 {
 					if _, exists := found[[2]int{rowmove, colmove}]; !exists {
 						found[[2]int{rowmove, colmove}] = true
+						score++
+					} else if !unique {
 						score++
 					}
 					continue
@@ -106,15 +108,18 @@ func main() {
 	bb.cols = len(bb.grid[0])
 
 	res1 := 0
+	res2 := 0
 	for irow := 0; irow < bb.rows; irow++ {
 		for icol := 0; icol < bb.cols; icol++ {
 			if bb.grid[irow][icol] == '0' {
-				r := bb.findpaths([2]int{irow, icol})
-				res1 += r
+				res1 += bb.findpaths([2]int{irow, icol}, true)
+				res2 += bb.findpaths([2]int{irow, icol}, false)
+
 			}
 		}
 	}
 
 	fmt.Println("res1:", res1)
+	fmt.Println("res2:", res2)
 
 }
