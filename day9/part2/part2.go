@@ -9,7 +9,6 @@ import (
 )
 
 type sector interface {
-	Size() int64
 }
 
 type vfile struct {
@@ -18,23 +17,15 @@ type vfile struct {
 	moved bool // to prevent move file twice
 }
 
-func (v *vfile) Size() int64 {
-	return v.size
-}
-
 type empty struct {
 	size int64
-}
-
-func (e *empty) Size() int64 {
-	return e.size
 }
 
 type vchunk struct {
 	vsectors []sector
 }
 
-// salloc return true if there is empty sector >= size
+// salloc returns true if there is an empty sector with a size >= 'size'.
 func (v *vchunk) salloc(size int64) bool {
 	for _, vs := range v.vsectors {
 		if em, ok := vs.(*empty); ok {
@@ -46,7 +37,7 @@ func (v *vchunk) salloc(size int64) bool {
 	return false
 }
 
-// allocatefile allocates vf in empty sector with size >= vf.size
+// allocatefile allocates 'vf' in an empty sector with a size >= vf.size.
 func (v *vchunk) allocatefile(vf *vfile) bool {
 	for si, vs := range v.vsectors {
 		if em, ok := vs.(*empty); ok {
@@ -64,7 +55,7 @@ type vdisk struct {
 	vchunks []*vchunk
 }
 
-// biasleft vove vch chunk to left if there is space left.
+// biasleft move vch chunk to left if there is space left.
 func (v *vdisk) biasleft(vch *vchunk) {
 	for si, vs := range vch.vsectors { // for every file in vch
 		vf, ok := vs.(*vfile)

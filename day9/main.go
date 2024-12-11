@@ -58,10 +58,10 @@ func main() {
 	lbp := fi.Size()
 	// warn: asumed odd valid char size
 	if lbp%2 == 0 {
-		// the last char is 10 (carriage return)
-		// and the next one is the file block size
-		// back 2 positions bring us the last
-		// file block size
+		// The last character is 10 (carriage return),
+		// and the next one represents the file block size.
+		// Moving back 2 positions gives us the last
+		// file block size.
 		lbp = lbp - 2
 	} else {
 		// back 3 positions [blocksize <-, freespace, carriagereturn]
@@ -117,11 +117,11 @@ func main() {
 
 	// part 2
 
-	// The strategy used for part 1 is too tricky to be used for
-	// part 2. So a new strategy should be implemented for part 2
-	// This is a reminder for future implementation: a too specific
-	// solution can just work for specific problem and hard to
-	// refactor.
+	// The strategy used for part 1 is too complex to be applied to
+	// part 2. Therefore, a new strategy should be implemented for part 2.
+	// This is a reminder for future implementations: an overly specific
+	// solution might only work for a particular problem and could be
+	// difficult to refactor.
 
 	res2 := part2.Main(file)
 
