@@ -60,7 +60,7 @@ func play(mb *machineBehavior) int64 {
 		return 0
 	}
 
-	// Cramer'r rule
+	// Cramer's rule
 	aa := przx*mb.buttonB[1] - przy*mb.buttonB[0]
 	bb := przy*mb.buttonA[0] - przx*mb.buttonA[1]
 
